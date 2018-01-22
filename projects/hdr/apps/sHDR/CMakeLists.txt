@@ -1,0 +1,249 @@
+cmake_minimum_required(VERSION 2.8)
+
+# Include the directory itself as a path to include directories
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+PROJECT(sHDR)
+
+#find libraries
+include(find)
+
+#--------------------------------------------------------------------------------
+# This sets the windows build that will need the special winmain@16 call. Qt provides
+#  this for us in the qtmain.lib file. Using this cmake code will ensure we have it
+#  linked into our build. Not needed on Unix/OS X/Linux which is why we have the 
+#  IF(WIN32) conditional.
+IF (WIN32)
+    SET (QT_USE_QTMAIN TRUE)
+ENDIF (WIN32)
+
+#--------------------------------------------------------------------------------
+# this command finds Qt4 libraries and sets all required variables
+# note that it's Qt4, not QT4 or qt4
+#detect Qt version (depends on VTK-Qt)
+#~ IF(VTK_MAJOR_VERSION GREATER 5 AND VTK_MINOR_VERSION GREATER 0) #need 6.1 and above
+#~   include(vtkQt)
+#~ ENDIF(VTK_MAJOR_VERSION GREATER 5 AND VTK_MINOR_VERSION GREATER 0)
+IF(VTK_QT_VERSION VERSION_GREATER "4")
+  FIND_PACKAGE(Qt5Widgets REQUIRED QUIET)
+  include_directories(${Qt5Widgets_INCLUDE_DIRS})
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+  qt5_wrap_cpp(QVTKLibMocSrcs ${QVTKMocHeaders})
+  set(QT_LIBRARIES ${Qt5Widgets_LIBRARIES})
+ELSE(VTK_QT_VERSION VERSION_GREATER "4")
+  FIND_PACKAGE(Qt4 REQUIRED QtCore QtGui QtWebkit)
+  INCLUDE(${QT_USE_FILE})
+ENDIF(VTK_QT_VERSION VERSION_GREATER "4")
+
+ADD_DEFINITIONS(-DMILX_DLL) #DLL Export MILX
+ADD_DEFINITIONS(-DMILX_PLUGIN_DLL) #DLL Export MILX
+
+#Iconing and APP variable for fixup, needs to be before ADD_EXECUTABLE for Windows
+set(APPS "\${CMAKE_INSTALL_PREFIX}/bin/sHDR")
+IF (WIN32)
+  # There is a bug in NSI that does not handle full unix paths properly.
+  set(SMILX_ICON_FILE ${PROJECT_SOURCE_DIR}/sHDR.rc)
+  set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\sHDR.rc")
+  set(APPS "\${CMAKE_INSTALL_PREFIX}/bin/sHDR.exe")
+ELSEIF(APPLE)
+  set(APPS "\${CMAKE_INSTALL_PREFIX}/sHDR.app")  
+  set(SMILX_ICON_FILE ${PROJECT_SOURCE_DIR}/sHDR.icns)
+  set(MACOSX_BUNDLE_ICON_FILE ${SMILX_ICON_FILE})
+  set_source_files_properties(${MACOSX_BUNDLE_ICON_FILE} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  set(SMILX_LD_LIBRARY_PATH "DYLD_LIBRARY_PATH")
+ELSE(WIN32)
+  set(SMILX_ICON_FILE ${PROJECT_SOURCE_DIR}/sHDR.png)
+  set(SMILX_LD_LIBRARY_PATH "LD_LIBRARY_PATH")
+ENDIF (WIN32)
+
+include_directories (${MILXQT_INCLUDE_DIRS} ../src ${HDR_INCLUDE_PATH} ${ITK_INCLUDE_DIRS} ${LIBRARY_INCLUDE_PATH}/itk-ext)
+# Add link directories needed to use ITK.
+link_directories(${ITK_LIBRARY_DIRS} ${VTK_LIBRARY_DIRS} ${LIBRARY_OUTPUT_PATH})
+
+ADD_EXECUTABLE(sHDR WIN32 MACOSX_BUNDLE ${SMILX_ICON_FILE} sHDR.cpp)
+TARGET_LINK_LIBRARIES(sHDR milx-Qt-HDR ${SMILI_LIBRARIES} ${QT_LIBRARIES} ${VTK_LIBRARIES} ${ITK_LIBRARIES})
+
+IF(UNIX)
+  configure_file(sHDR.in "sHDR" @ONLY)
+  
+  install(FILES "${PROJECT_BINARY_DIR}/sHDR" DESTINATION "../../bin" 
+    PERMISSIONS WORLD_READ WORLD_EXECUTE)
+ENDIF(UNIX)
+
+# Installs the executable
+INSTALL(TARGETS sHDR 
+	BUNDLE DESTINATION . COMPONENT Runtime
+	RUNTIME DESTINATION bin COMPONENT Runtime
+	)
+
+#--------------------------------------------------------------------------------
+#Packaging
+SET(CPACK_PACKAGE_NAME "sHDR")
+SET(CPACK_PACKAGE_VENDOR "UQ")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${SMILX_VERSION_MAJOR}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${SMILX_VERSION_MINOR}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${SMILX_VERSION_PATCH}")
+SET(CPACK_MONOLITHIC_INSTALL 1)
+SET(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/license.txt)
+SET(CPACK_PACKAGE_VERSION ${SMILX_VERSION_STRING})
+SET(CPACK_PACKAGE_FILE_NAME "sHDR-Setup-v${SMILX_VERSION_STRING}")
+
+INCLUDE(InstallRequiredSystemLibraries)
+
+SET(CPACK_PACKAGE_EXECUTABLES sHDR sHDR)
+
+IF (WIN32)
+    set(_add_executable_param WIN32)
+
+    SET(CPACK_NSIS_MUI_ICON "${PROJECT_SOURCE_DIR}\\\\sHDR.ico")
+    SET(CPACK_NSIS_MUI_UNIICON "${PROJECT_SOURCE_DIR}\\\\sHDR.ico")
+    # There is a bug in NSI that does not handle full unix paths properly. Make
+    # sure there is at least one set of four (4) backlasshes.
+    SET(CPACK_PACKAGE_INSTALL_DIRECTORY "sHDR")
+    SET(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "sHDR ${CPACK_PACKAGE_VERSION}")
+    SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\sHDR.exe")
+    SET(CPACK_NSIS_DISPLAY_NAME "sHDR")
+    SET(CPACK_NSIS_HELP_LINK "http://qcplusplus.sourceforge.net/")
+    SET(CPACK_NSIS_URL_INFO_ABOUT "http://qcplusplus.sourceforge.net/")
+    SET(CPACK_NSIS_CONTACT "shakes76@users.sourceforge.net")
+    SET(CPACK_NSIS_MODIFY_PATH ON)
+    
+    #Pull out other dependencies
+    SET(LIBRARY_DIRS ${SMILI_BINARY_DIR}/lib;${MILXQT_INSTALL_BINARY_DIR};${VTK_LIBRARY_DIRS};${ITK_LIBRARY_DIRS};${QT_LIBRARY_DIR};${PYTHONQT_DIR}/lib)    
+    
+    install(CODE "
+    file(GLOB_RECURSE PLUGINS
+      \"\${CMAKE_INSTALL_PREFIX}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+    include(BundleUtilities)
+    fixup_bundle(\"${APPS}\" \"\${PLUGINS}\" \"${LIBRARY_DIRS}\")
+    " COMPONENT Runtime)
+    
+    # for windows, use nsis
+    SET(CPACK_GENERATOR NSIS)
+ELSE(WIN32) #Rest of the OSes (Unix and Apple atm)
+  SET(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local/sHDR.${CPACK_PACKAGE_VERSION}")
+  SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "sHDR is a graphical frontend for multi-scale HDR MRI.")
+  SET(CPACK_PACKAGE_DESCRIPTION "sHDR provides easy ways to apply HDR algorithms to MRI images.")
+  SET(CPACK_STRIP_FILES "\${CMAKE_INSTALL_PREFIX}/bin/sHDR")
+  SET(CPACK_SOURCE_STRIP_FILES "")
+  
+  configure_file(sHDR.sh.in "sHDR" @ONLY) #to bin
+  configure_file(sHDR.sh.in "sHDR.sh" @ONLY) #startup
+  #configure_file(sHDR.desktop.in "sHDR.desktop" @ONLY)
+
+  IF(APPLE) #Assumes MAC OSX
+    SET(CPACK_BUNDLE_NAME "sHDR")
+    SET(CPACK_BUNDLE_STARTUP_COMMAND "${PROJECT_BINARY_DIR}/sHDR.sh")
+    #SET(CPACK_BUNDLE_PLIST "${PROJECT_SOURCE_DIR}/Info-CMake.plist")
+    SET(CPACK_BUNDLE_ICON ${SMILX_ICON_FILE})
+    
+    # Set the OS X Bundle specific CMake variables which will be used to populate the plist for
+    # the application bundle
+    ConfigureMacOSXBundlePlist(${PROJECT_NAME} "" ${PROJECT_SOURCE_DIR} ${SMILX_VERSION_STRING})
+
+    # Make sure we can find the 'ibtool' program. If we can NOT find it we
+    # skip generation of this project
+    # find_program(IBTOOL ibtool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin")
+    # if (${IBTOOL} STREQUAL "IBTOOL-NOTFOUND")
+    #   message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with the Apple developer tools. The default system paths were searched in addition to ${OSX_DEVELOPER_ROOT}/usr/bin")
+    # endif()
+
+    # Make sure the 'Resources' Directory is correctly created before we build
+    # add_custom_command (TARGET smilx PRE_BUILD COMMAND mkdir -p ${EXECUTABLE_OUTPUT_PATH}/\${CONFIGURATION}/smilx.app/Contents/Resources)
+
+    set(CMAKE_INSTALL_PREFIX "")
+    SET(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+    set(CPACK_GENERATOR DragNDrop)
+    #set(CPACK_GENERATOR DragNDrop; PackageMaker)
+    set(CPACK_DMG_FORMAT "UDBZ")
+    set(CPACK_DMG_VOLUME_NAME "${CPACK_PACKAGE_NAME}")
+    set(CPACK_SYSTEM_NAME "OSX")
+
+    #Pull out other dependencies
+    SET(LIBRARY_DIRS ${SMILI_BINARY_DIR}/lib;${MILXQT_INSTALL_BINARY_DIR};${VTK_LIBRARY_DIRS};${ITK_LIBRARY_DIRS};${QT_LIBRARY_DIR};${PYTHONQT_DIR}/lib)    
+
+    IF(CPACK_BINARY_PACKAGEMAKER) #Package Maker 
+      set(CMAKE_INSTALL_PREFIX "/Applications") 
+      # install(CODE "
+      # file(GLOB_RECURSE PLUGINS
+      #   \"\${SMILI_PLUGINS_PATH}/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
+      # set(BU_CHMOD_BUNDLE_ITEMS ON)
+      # include(BundleUtilities)
+      # fixup_bundle(\"${APPS}\" \"\${PLUGINS}\" \"${LIBRARY_DIRS}\")
+      # " COMPONENT Runtime)
+    # ELSE(CPACK_BINARY_PACKAGEMAKER)
+      # Install VTK files 
+      # FILE(GLOB vtkFiles "${VTK_DIR}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      # INSTALL(FILES ${vtkFiles} DESTINATION lib COMPONENT Runtime
+      # PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+      
+      #install Qt files
+      # FILE(GLOB qtFiles_QtCore "${QT_LIBRARY_DIR}/QtCore.framework/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      # INSTALL(FILES ${qtFiles_QtCore} DESTINATION lib COMPONENT Runtime
+      # PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+      
+      #SET(CPACK_GENERATOR Bundle)
+    ENDIF(CPACK_BINARY_PACKAGEMAKER) #Package Maker
+
+    include(DeployQt4)
+    set(EXECUTABLE "${PROJECT_NAME}.app")
+    install_qt4_executable("${EXECUTABLE}" "${PLUGINS} qsqlite" "" ${LIBRARY_DIRS})
+
+  ELSE(APPLE) #UNIX etc.
+    set(_add_executable_param UNIX)
+
+    #Install all necessary libraries
+    install(FILES ${MILXQT_LIBS} DESTINATION lib
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+    
+    #Install ITK libraries
+    IF(ITK_VERSION_MAJOR GREATER 3)
+      FILE(GLOB itkFiles "${ITK_DIR}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    ELSE(ITK_VERSION_MAJOR GREATER 3)
+      FILE(GLOB itkFiles "${ITK_DIR}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    ENDIF(ITK_VERSION_MAJOR GREATER 3)
+    INSTALL(FILES ${itkFiles} DESTINATION lib COMPONENT Runtime
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+    
+    #Debian
+    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Shekhar Chandra <Shekhar.Chandra@csiro.au>")
+  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network") #10.04
+  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libinsighttoolkit3.20, libpythonqt2.0") #12.04
+    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libpythonqt2.0") #12.04, no ITK
+  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.6, libvtk5.6-qt4") #11.10
+
+    #RPM
+    SET(CPACK_RPM_PACKAGE_LICENSE "CSIRO Binary Distribution License")
+    SET(CPACK_RPM_PACKAGE_REQUIRES "libqt4, vtk, vtk-qt") #opensuse 12.3
+    
+    # Install VTK files 
+    #USING PACKAGE MANAGER VERSION
+    
+    #Install startup scripts
+    install(FILES "${PROJECT_BINARY_DIR}/sHDR" DESTINATION "../../bin" 
+    PERMISSIONS WORLD_READ WORLD_EXECUTE)
+    install(FILES "${PROJECT_BINARY_DIR}/sHDR.sh" DESTINATION . 
+    PERMISSIONS WORLD_READ WORLD_EXECUTE)
+    
+    #desktop file for menus
+    SET(SMILX_DESKTOP_DIR "/usr/share/applications/")
+    SET(SMILX_PIXMAPS_DIR "/usr/share/icons/")
+  #~     FIND_PACKAGE(KDE4)
+  #~     include(KDE4Internal)
+  #~     install(FILES ${PROJECT_BINARY_DIR}/sHDR.desktop DESTINATION ${XDG_APPS_INSTALL_DIR}) 
+    install(FILES ${PROJECT_BINARY_DIR}/sHDR.desktop DESTINATION ${SMILX_DESKTOP_DIR}) 
+  #~     install(FILES ${SMILI_SOURCE_DIR}/resources/smilx_icon.png DESTINATION ${ICON_INSTALL_DIR}) 
+    install(FILES ${SMILI_SOURCE_DIR}/resources/smilx_icon.png DESTINATION ${SMILX_PIXMAPS_DIR}) 
+  #~     kde4_add_app_icon(smilx.cpp "${SMILI_SOURCE_DIR}/resources/smilx_icon.png")
+    find_program(XDG-DESKTOP-MENU_EXECUTABLE xdg-desktop-menu)
+    INSTALL(CODE "
+    execute_process(COMMAND ${XDG-DESKTOP-MENU_EXECUTABLE} install --novendor ${PROJECT_BINARY_DIR}/sHDR.desktop)
+    ")
+
+    SET(CPACK_GENERATOR TGZ; DEB; RPM)
+  ENDIF(APPLE)
+  
+  set(CPACK_PACKAGE_ICON ${SMILX_ICON_FILE})
+ENDIF(WIN32)
+
+INCLUDE(CPack)
