@@ -1,6 +1,9 @@
 ﻿# HDR-MRI
 
-This library contains source code and scripts for the HDR-MRI project published in MRM. Please cite this work as:
+This library contains source code and scripts for the HDR-MRI project published in MRM. 
+![sHDR Screenshot](resources/screenies/main_wide.png)
+
+Please cite this work as:
 
 ```
 Local Contrast Enhanced MR Images via High Dynamic Range Processing
