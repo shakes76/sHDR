@@ -1,5 +1,9 @@
-﻿## Introduction
-This library contains source code and scripts for the HDR-MRI project.
+﻿# HDR-MRI
+
+This library contains source code and scripts for the HDR-MRI project published in MRM. Please cite this work as:
+
+Local Contrast Enhanced MR Images via High Dynamic Range Processing
+Chandra SS, Engstrom C, Fripp J, Walker D, Rose S, Ho C, Crozier S. Magnetic Resonance in Medicine. 2018.
 
 ## Prerequisites 
 You will require builds of VTK 6, ITK 4, Qt 4 and SMILI (smili-project.sourceforge.io/).
