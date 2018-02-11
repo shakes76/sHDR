@@ -11,7 +11,9 @@ Chandra SS, Engstrom C, Fripp J, Walker D, Rose S, Ho C, Crozier S. Magnetic Res
 ```
 
 ## Prerequisites 
-You will require builds of VTK 6, ITK 4, Qt 4 and SMILI (smili-project.sourceforge.io/).
+Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
+
+For the main lbranch, you will require builds of VTK 6, ITK 4, Qt 4 and SMILI (smili-project.sourceforge.io/).
 
 I have tested this software on VTK 6.3.0, ITK 4.10, Qt 4.8.7 and SMILI v1.02
 
