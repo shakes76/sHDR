@@ -22,13 +22,13 @@
 #include "itkFastBilateralImageFilter.h"
 #include "itkSubtractImageFilter.h"
 #include "itkLogImageFilter.h"
+#include "itkChangeInformationImageFilter.h"
+#include "itkGradientMagnitudeRecursiveGaussianImageFilter.h"
+#include "itkSmoothingRecursiveGaussianImageFilter.h"
 #include "itkProgressReporter.h"
 #include "itkImageAlgorithm.h"
 
 #include "itkMinimumImageFunction.h"
-
-#include "milxImage.h"
-#include "milxFile.h"
 
 namespace itk
 {
@@ -82,21 +82,7 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
       ///run MLIC
       CreateMultiLightImageCollection(image, m_SigmaRange, m_SigmaDomain, m_Levels);
 
-      //Debug, check MLIC output
-      //      for(size_t level = 0; level < m_Levels; level ++)
-      //        {
-      //          std::string filename = outputPrefix + "_bilateral_level_" + milx::NumberToString(level) + ".nii.gz";
-      //          milx::File::SaveImage<OutputImageType>(filename, m_LevelResults[level]);
-      //          std::string filenameDiff = outputPrefix + "_diff_level_" + milx::NumberToString(level) + ".nii.gz";
-      //          milx::File::SaveImage<OutputImageType>(filenameDiff, m_DiffResults[level]);
-      //        }
-
       ComputeMultiscaleShapeDetailEnhancement(m_LevelResults, m_DiffResults, region, m_Levels, m_Lambda);
-
-      //      std::string filename = outputPrefix + "_image_" + milx::NumberToString(idx) + "_base.nii.gz";
-      //      milx::File::SaveImage<OutputImageType>(filename, m_LevelBaseImage);
-      //      std::string filenameDiff = outputPrefix + "_image_" + milx::NumberToString(idx) + "_details.nii.gz";
-      //      milx::File::SaveImage<OutputImageType>(filenameDiff, m_LevelDetailImage);
 
       m_LevelBaseImages.push_back(m_BaseImage);
       m_LevelDetailImages.push_back(m_DetailImage);
@@ -104,10 +90,10 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
 
     typename InputImageType::Pointer imageFirst = const_cast<InputImageType *>(this->GetInput(0));
     typename InputImageType::RegionType region = imageFirst->GetLargestPossibleRegion();
-    typename TOutputImage::Pointer baseBlank = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-    typename TOutputImage::Pointer base = milx::Image<TOutputImage>::MatchInformation(baseBlank, imageFirst); //ensure images in same space
-    typename TOutputImage::Pointer detailBlank = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-    typename TOutputImage::Pointer detail = milx::Image<TOutputImage>::MatchInformation(detailBlank, imageFirst); //ensure images in same space
+    typename TOutputImage::Pointer baseBlank = BlankImage(0.0, region.GetSize());
+    typename TOutputImage::Pointer base = MatchInformation(baseBlank, imageFirst); //ensure images in same space
+    typename TOutputImage::Pointer detailBlank = BlankImage(0.0, region.GetSize());
+    typename TOutputImage::Pointer detail = MatchInformation(detailBlank, imageFirst); //ensure images in same space
     std::cout << "Synthesize layers ... " << std::endl;
     for(IndexValueType idx = 0; idx < this->GetNumberOfInputs(); ++idx)
     {
@@ -165,8 +151,8 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
     if(m_SumsOfSquares)
     {
       std::cout << "Sums of Squares Image ... " << std::endl;
-      typename TOutputImage::Pointer sosImage = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-      m_SoSImage = milx::Image<TOutputImage>::MatchInformation(sosImage, imageFirst); //ensure images in same space
+      typename TOutputImage::Pointer sosImage = BlankImage(0.0, region.GetSize());
+      m_SoSImage = MatchInformation(sosImage, imageFirst); //ensure images in same space
       for(IndexValueType idx = 0; idx < this->GetNumberOfInputs(); ++idx)
       {
         typename InputImageType::Pointer image = const_cast<InputImageType *>(this->GetInput(idx));
@@ -192,8 +178,8 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
     if(m_Average)
     {
       std::cout << "Average Image ... " << std::endl;
-      typename TOutputImage::Pointer aveImage = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-      m_AverageImage = milx::Image<TOutputImage>::MatchInformation(aveImage, imageFirst); //ensure images in same space
+      typename TOutputImage::Pointer aveImage = BlankImage(0.0, region.GetSize());
+      m_AverageImage = MatchInformation(aveImage, imageFirst); //ensure images in same space
       for(IndexValueType idx = 0; idx < this->GetNumberOfInputs(); ++idx)
       {
         typename InputImageType::Pointer image = const_cast<InputImageType *>(this->GetInput(idx));
@@ -213,8 +199,8 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
     if(m_BiasField)
     {
       std::cout << "Bias Field Image ... " << std::endl;
-      typename TOutputImage::Pointer biasImage = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-      m_BiasFieldImage = milx::Image<TOutputImage>::MatchInformation(biasImage, imageFirst); //ensure images in same space
+      typename TOutputImage::Pointer biasImage = BlankImage(0.0, region.GetSize());
+      m_BiasFieldImage = MatchInformation(biasImage, imageFirst); //ensure images in same space
       for(IndexValueType idx = 0; idx < this->GetNumberOfInputs(); ++idx)
       {
         typename InputImageType::Pointer image = const_cast<InputImageType *>(this->GetInput(idx));
@@ -333,8 +319,8 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
 
     float epsilon = 1e-8; //avoid divide by zero
     float lambdaValues[3] = { lambdaValue, lambdaValue + 0.05, lambdaValue + 0.15 };
-    typename InputImageType::Pointer levelDetailBlank = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-    m_DetailImage = milx::Image<TOutputImage>::MatchInformation(levelDetailBlank, results[0]); //ensure images in same space
+    typename InputImageType::Pointer levelDetailBlank = BlankImage(0.0, region.GetSize());
+    m_DetailImage = MatchInformation(levelDetailBlank, results[0]); //ensure images in same space
     for(size_t level = 0; level < levels; level ++)
       {
         float lambda = lambdaValue;
@@ -342,10 +328,10 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
           lambda = lambdaValues[level];
 
         std::cout << "\tProcessing image in level " << level << " with lambda of " << lambda << std::endl;
-        typename TOutputImage::Pointer weightsBlank = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-        typename TOutputImage::Pointer weights = milx::Image<TOutputImage>::MatchInformation(weightsBlank, results[0]); //ensure images in same space
+        typename TOutputImage::Pointer weightsBlank = BlankImage(0.0, region.GetSize());
+        typename TOutputImage::Pointer weights = MatchInformation(weightsBlank, results[0]); //ensure images in same space
 
-        typename TOutputImage::Pointer gradMagResult = milx::Image<TOutputImage>::GradientMagnitude(results[level]);
+        typename TOutputImage::Pointer gradMagResult = GradientMagnitude(results[level]);
 
         typedef itk::MinimumImageFunction<TOutputImage> FilterType;
         typename FilterType::Pointer minImageFunction = FilterType::New();
@@ -375,7 +361,7 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
         //std::cout << "Done" << std::endl;
 
         //Smooth weights
-        typename TOutputImage::Pointer weightsFinal = milx::Image<TOutputImage>::GaussianSmooth(weights, 1); //smooth, 8 parameter from Fattal et al. 2007
+        typename TOutputImage::Pointer weightsFinal = GaussianSmooth(weights, 1); //smooth, 8 parameter from Fattal et al. 2007
 
         //Muliply, Add and Deep Copy detail
         //std::cout << "Form level layers ... " << std::endl;
@@ -453,8 +439,8 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
   std::cout << "Applying Scaling in Log Domain of " << scale << std::endl;
 
   //Apply scaling in log domain
-  typename TOutputImage::Pointer scaledImage = milx::Image<TOutputImage>::BlankImage(0.0, region.GetSize());
-  m_DetailImage = milx::Image<TOutputImage>::MatchInformation(scaledImage, image); //ensure images in same space
+  typename TOutputImage::Pointer scaledImage = BlankImage(0.0, region.GetSize());
+  m_DetailImage = MatchInformation(scaledImage, image); //ensure images in same space
   itk::ImageRegionConstIterator<TOutputImage> logIterator(logImage, region);
   itk::ImageRegionConstIterator<TOutputImage> baseIterator(m_BaseImage, region);
   itk::ImageRegionIterator<TOutputImage> detailIterator(m_DetailImage, region);
@@ -475,6 +461,110 @@ HighDynamicRangeImageFilter< TInputImage, TOutputImage >
     ++detailIterator;
     ++outputIterator;
   }
+}
+
+//Image helper functions
+template< typename TInputImage, typename TOutputImage >
+itk::SmartPointer<TOutputImage>
+HighDynamicRangeImageFilter< TInputImage, TOutputImage >
+::BlankImage(typename TOutputImage::PixelType value, typename TOutputImage::SizeType imgSize)
+{
+  typename TOutputImage::IndexType blankStart;
+  blankStart.Fill(0);
+
+  typename TOutputImage::RegionType blankRegion;
+  blankRegion.SetIndex(blankStart);
+  blankRegion.SetSize(imgSize);
+
+  //create image
+  typename TOutputImage::Pointer img = TOutputImage::New();
+  img->SetRegions(blankRegion);
+  img->Allocate();
+  img->FillBuffer(value);
+
+  return img;
+}
+
+template< typename TInputImage, typename TOutputImage >
+itk::SmartPointer<TOutputImage>
+HighDynamicRangeImageFilter< TInputImage, TOutputImage >
+::MatchInformation(itk::SmartPointer<TOutputImage> img, itk::SmartPointer<TOutputImage> imgToMatch, bool originOnly)
+{
+  typedef itk::ChangeInformationImageFilter<TOutputImage> ChangeInfoImageFilterType;
+  typename ChangeInfoImageFilterType::Pointer change = ChangeInfoImageFilterType::New();
+  change->SetInput(img);
+  change->SetReferenceImage(imgToMatch);
+  //change->AddObserver(itk::ProgressEvent(), ProgressUpdates);
+  change->UseReferenceImageOn();
+  if(!originOnly)
+  {
+    change->ChangeDirectionOn();
+    change->ChangeSpacingOn();
+    change->ChangeRegionOn();
+  }
+  else
+  {
+    change->ChangeDirectionOff();
+    change->ChangeSpacingOff();
+    change->ChangeRegionOff();
+  }
+  change->ChangeOriginOn();
+  try
+  {
+    change->Update();
+  }
+  catch (itk::ExceptionObject & ex )
+  {
+    std::cerr << "Failed Matching Info" << std::endl;
+    std::cerr << ex.GetDescription() << std::endl;
+  }
+
+  return change->GetOutput();
+}
+
+template< typename TInputImage, typename TOutputImage >
+itk::SmartPointer<TOutputImage>
+HighDynamicRangeImageFilter< TInputImage, TOutputImage >
+::GradientMagnitude(itk::SmartPointer<TOutputImage> img)
+{
+  typedef itk::GradientMagnitudeRecursiveGaussianImageFilter<TOutputImage, TOutputImage> GradImageFilterType;
+  typename GradImageFilterType::Pointer gradientMagnitudeFilter = GradImageFilterType::New();
+  gradientMagnitudeFilter->SetInput(img);
+  //gradientMagnitudeFilter->AddObserver(itk::ProgressEvent(), ProgressUpdates);
+  try
+  {
+    gradientMagnitudeFilter->Update();
+  }
+  catch (itk::ExceptionObject & ex )
+  {
+    std::cerr << "Failed Computing Gradient Magnitude" << std::endl;
+    std::cerr << ex.GetDescription() << std::endl;
+  }
+
+  return gradientMagnitudeFilter->GetOutput();
+}
+
+template< typename TInputImage, typename TOutputImage >
+itk::SmartPointer<TOutputImage>
+HighDynamicRangeImageFilter< TInputImage, TOutputImage >
+::GaussianSmooth(itk::SmartPointer<TOutputImage> img, const float variance)
+{
+  typedef itk::SmoothingRecursiveGaussianImageFilter<TOutputImage, TOutputImage> GuassianImageFilterType;
+  typename GuassianImageFilterType::Pointer smoothGaussian = GuassianImageFilterType::New();
+  smoothGaussian->SetInput(img);
+  smoothGaussian->SetSigma(variance);
+  //smoothGaussian->AddObserver(itk::ProgressEvent(), ProgressUpdates);
+  try
+  {
+    smoothGaussian->Update();
+  }
+  catch (itk::ExceptionObject & ex )
+  {
+    std::cerr << "Failed Computing Gaussian Smoothing" << std::endl;
+    std::cerr << ex.GetDescription() << std::endl;
+  }
+
+  return smoothGaussian->GetOutput();
 }
 
 } // end namespace itk

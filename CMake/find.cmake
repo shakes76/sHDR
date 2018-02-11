@@ -29,20 +29,22 @@ else(ITK_USE_REVIEW OR "${ITK_VERSION_MAJOR}" GREATER 3)
     set(ITK_REVIEW_LIBRARIES )
 endif(ITK_USE_REVIEW OR "${ITK_VERSION_MAJOR}" GREATER 3)
 
-FIND_PACKAGE(VTK)
-INCLUDE(${VTK_USE_FILE})
+IF(BUILD_GUI)
+    FIND_PACKAGE(VTK)
+    INCLUDE(${VTK_USE_FILE})
 
-IF(NOT sHDR_FIND_MESSAGE)
-    message("Using VTK from ${VTK_DIR}")
-ENDIF(NOT sHDR_FIND_MESSAGE)
+    IF(NOT sHDR_FIND_MESSAGE)
+        message("Using VTK from ${VTK_DIR}")
+    ENDIF(NOT sHDR_FIND_MESSAGE)
 
-if(VTK_LIBRARIES)
-#~   message("VTK Libraries Defined")
-else(VTK_LIBRARIES)
-  set(VTK_LIBRARIES vtkHybrid vtkIO)
-#~   message("Defined VTK Libraries as ${VTK_LIBRARIES}")
-endif(VTK_LIBRARIES)
+    if(VTK_LIBRARIES)
+    #~   message("VTK Libraries Defined")
+    else(VTK_LIBRARIES)
+      set(VTK_LIBRARIES vtkHybrid vtkIO)
+    #~   message("Defined VTK Libraries as ${VTK_LIBRARIES}")
+    endif(VTK_LIBRARIES)
 
-set(sHDR_FIND_MESSAGE TRUE) #dont keep printing message
+    set(sHDR_FIND_MESSAGE TRUE) #dont keep printing message
 
-FIND_PACKAGE(SMILI REQUIRED)
+    FIND_PACKAGE(SMILI REQUIRED)
+ENDIF(BUILD_GUI)

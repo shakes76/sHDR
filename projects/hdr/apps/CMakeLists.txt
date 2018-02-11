@@ -23,4 +23,6 @@ ADD_EXECUTABLE(itkHighDynamicRangeImageApp MACOSX_BUNDLE ${HDR_HEADERS} itkHighD
 TARGET_LINK_LIBRARIES(itkHighDynamicRangeImageApp ${ITK_LIBRARIES} ${ZLIB_LIBRARIES} ${SMILI_LIBRARIES} ${VTK_LIBRARIES})
 
 #other apps
-add_subdirectory (sHDR)
+IF(BUILD_GUI)
+    add_subdirectory (sHDR)
+ENDIF(BUILD_GUI)

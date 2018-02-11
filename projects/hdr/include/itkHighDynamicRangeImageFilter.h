@@ -199,6 +199,30 @@ protected:
   HighDynamicRangeImageFilter();
   ~HighDynamicRangeImageFilter() {}
 
+  //Image Helper functions, SMILI based v1.02
+  /*!
+    \fn BlankImage(const TOutputImage::PixelType value, const TOutputImage::SizeType imgSize)
+    \brief Creates an empty image filled with value given.
+  */
+  static itk::SmartPointer<TOutputImage> BlankImage(typename TOutputImage::PixelType value, typename TOutputImage::SizeType imgSize);
+  /*!
+        \fn MatchInformation(itk::SmartPointer<TOutputImage> img, itk::SmartPointer<TOutputImage> imgToMatch, bool originOnly = false)
+        \brief Changes the image info to match that of provided image. By default, only the spacing, region and origin are changed.
+
+        Set the originOnly argument true to only match the origin.
+  */
+  static itk::SmartPointer<TOutputImage> MatchInformation(itk::SmartPointer<TOutputImage> img, itk::SmartPointer<TOutputImage> imgToMatch, bool originOnly = false);
+  /*!
+        \fn GradientMagnitude(itk::SmartPointer<TOutputImage> img)
+        \brief Generates an image with the gradient magnitude of the given image.
+  */
+  static itk::SmartPointer<TOutputImage> GradientMagnitude(itk::SmartPointer<TOutputImage> img);
+  /*!
+    \fn GaussianSmooth(itk::SmartPointer<TOutputImage> img, const float variance)
+    \brief Generates the Gaussian smoothing (by convolution) of an image using the variance provided.
+  */
+  static itk::SmartPointer<TOutputImage> GaussianSmooth(itk::SmartPointer<TOutputImage> img, const float variance);
+
   void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 
   /** Override VeriyInputInformation() to add the additional check

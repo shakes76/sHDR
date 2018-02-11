@@ -21,17 +21,79 @@
 #include "itkImageFileWriter.h"
 #include "itkMinimumImageFunction.h"
 #include "itkHighDynamicRangeImageFilter.h"
-//SMILI
-#include "milxGlobal.h"
-#include "milxFile.h"
-#include "milxImage.h"
 
 #include <cmath>
 #include <iostream>
+#include <sys/stat.h> //exists check
 
 using namespace TCLAP;
 
 //Globals
+/**
+* \fn NumberToString(double num, unsigned zeroPad = 0)
+* \brief Number to string converter
+*/
+inline std::string NumberToString(double num, unsigned zeroPad = 0)
+{
+  std::ostringstream toString;
+  toString << std::setw(zeroPad) << std::setfill('0') << num;
+  return toString.str();
+}
+/**
+* \fn NumberOfProcessors()
+* \brief Number of processors or cores on the machine.
+*/
+inline unsigned NumberOfProcessors()
+{
+  unsigned cores = 1;
+
+#ifdef _WIN32
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo( &sysinfo );
+
+  cores = sysinfo.dwNumberOfProcessors;
+#else
+  cores = sysconf( _SC_NPROCESSORS_ONLN );
+#endif
+
+  return cores;
+}
+/*!
+  \fn File::Exists(const std::string filename)
+  \brief Returns true if the file already exists
+*/
+bool Exists(const std::string filename)
+{
+  struct stat buffer;
+  if (stat(filename.c_str(), &buffer) != -1)
+      return true;
+  return false;
+}
+/*!
+  \fn File::OpenImage(const std::string filename, typename itk::SmartPointer<TImage> &data)
+  \brief Opens an image file, which is any of the following: JPEG, PNG, DICOM, TIFF, NIFTI etc.
+
+  Returns true if successful. data is allocated within this member, so pass a NULL pointer.
+  Image is also NOT flipped, consider using overloaded OpenImage() with VTK image data which is flipped.
+*/
+template<class TImage>
+bool OpenImage(const std::string filename, typename itk::SmartPointer<TImage> &data);
+/**
+  \brief Opens the image using the ITK file reader class. Returns NULL if failed and outputs the error to std error.
+
+  This member is inline deliberately to avoid function call overheads.
+*/
+template<class TImage>
+itk::SmartPointer<TImage> ReadImageUsingITK(const std::string filename);
+/*!
+  \fn File::SaveImage(const std::string filename, typename itk::SmartPointer<TImage> data, itk::ImageIOBase *io = NULL)
+  \brief Saves an image file, which is any of the following: JPEG, PNG, DICOM, TIFF, NIFTI etc.
+
+  Returns true if successful.
+  Image is also NOT flipped, consider using overloaded OpenImage() with VTK image data which is flipped.
+*/
+template<class TImage>
+bool SaveImage(const std::string filename, typename itk::SmartPointer<TImage> data, itk::ImageIOBase *io = NULL);
 
 //Supported operations
 enum operations { none = 0, tonemap, msde };
@@ -45,12 +107,12 @@ int main(int argc, char* argv[])
 
   //---------------------------
   ///Process Arguments
-  CmdLine cmd("A tool for high dynamic range medical imaging", ' ', milx::NumberToString(0.2));
+  CmdLine cmd("A tool for high dynamic range medical imaging", ' ', NumberToString(0.2));
 
   ///Mandatory
   UnlabeledMultiArg<std::string> multinames("images", "Images to operate on (pixel type is auto detected from the first image)", true, "Images");
   ///Optional
-  ValueArg<size_t> threadsArg("", "threads", "Set he number of global threads to use.", false, milx::NumberOfProcessors()/2, "Threads");
+  ValueArg<size_t> threadsArg("", "threads", "Set he number of global threads to use.", false, NumberOfProcessors()/2, "Threads");
   ValueArg<std::string> outputArg("o", "output", "Output Image", false, "result.nii.gz", "Output");
   ValueArg<std::string> prefixArg("p", "prefix", "Output prefix for multiple output.", false, "img_", "Output Prefix");
   ValueArg<int> levelsArg("l", "levels", "Number of levels to use in the operation (such as MSDE).", false, 3, "Levels");
@@ -135,7 +197,7 @@ int main(int argc, char* argv[])
       // load images
       std::cout << "Loading: " << filenames[j];
       InputImageType::Pointer image;
-      milx::File::OpenImage<InputImageType>(filenames[j], image);
+      OpenImage<InputImageType>(filenames[j], image);
       //images.push_back(image); //prevent out-of-scope deletion
 
       hdrImage->AddInput(image);
@@ -167,41 +229,103 @@ int main(int argc, char* argv[])
       std::vector<OutputImageType::Pointer> diffResults = hdrImage->GetMultiLightDetails();
       for(size_t level = 0; level < levels; level ++)
         {
-          std::string filename = outputPrefix + "_bilateral_level_" + milx::NumberToString(level) + ".nii.gz";
-          milx::File::SaveImage<OutputImageType>(filename, levelResults[level]);
-          std::string filenameDiff = outputPrefix + "_diff_level_" + milx::NumberToString(level) + ".nii.gz";
-          milx::File::SaveImage<OutputImageType>(filenameDiff, diffResults[level]);
+          std::string filename = outputPrefix + "_bilateral_level_" + NumberToString(level) + ".nii.gz";
+          SaveImage<OutputImageType>(filename, levelResults[level]);
+          std::string filenameDiff = outputPrefix + "_diff_level_" + NumberToString(level) + ".nii.gz";
+          SaveImage<OutputImageType>(filenameDiff, diffResults[level]);
         }
 
       for (int j = 0; j < filenames.size(); j ++)
         {
-          std::string filename = outputPrefix + "_image_" + milx::NumberToString(j) + "_base.nii.gz";
-          milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetLevelBaseImage(j));
-          std::string filenameDiff = outputPrefix + "_image_" + milx::NumberToString(j) + "_details.nii.gz";
-          milx::File::SaveImage<OutputImageType>(filenameDiff, hdrImage->GetLevelDetailImage(j));
+          std::string filename = outputPrefix + "_image_" + NumberToString(j) + "_base.nii.gz";
+          SaveImage<OutputImageType>(filename, hdrImage->GetLevelBaseImage(j));
+          std::string filenameDiff = outputPrefix + "_image_" + NumberToString(j) + "_details.nii.gz";
+          SaveImage<OutputImageType>(filenameDiff, hdrImage->GetLevelDetailImage(j));
         }
     }
 
   std::cout << "Write Output" << std::endl;
   std::string filename = outputPrefix + "_final_base_" + ".nii.gz";
-  milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetBaseImage());
+  SaveImage<OutputImageType>(filename, hdrImage->GetBaseImage());
   filename = outputPrefix + "_final_detail_" + ".nii.gz";
-  milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetDetailImage());
+  SaveImage<OutputImageType>(filename, hdrImage->GetDetailImage());
   if(sosArg.isSet())
   {
     filename = outputPrefix + "_sos.nii.gz";
-    milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetSumsOfSquaresImage());
+    SaveImage<OutputImageType>(filename, hdrImage->GetSumsOfSquaresImage());
   }
   if(aveArg.isSet())
   {
     filename = outputPrefix + "_average.nii.gz";
-    milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetAverageImage());
+    SaveImage<OutputImageType>(filename, hdrImage->GetAverageImage());
   }
   //filename = outputPrefix + "_biasfield.nii.gz";
-  //milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetBiasFieldImage());
+  //SaveImage<OutputImageType>(filename, hdrImage->GetBiasFieldImage());
   filename = outputPrefix + ".nii.gz";
-  milx::File::SaveImage<OutputImageType>(filename, hdrImage->GetOutput());
+  SaveImage<OutputImageType>(filename, hdrImage->GetOutput());
 
   std::cout << "Complete" << std::endl;
   return EXIT_SUCCESS;
+}
+
+template<class TImage>
+bool OpenImage(const std::string filename, typename itk::SmartPointer<TImage> &data)
+{
+  if(!Exists(filename))
+  {
+    std::cerr << "File " << filename << " doesn't exist. Ignoring." << std::endl;
+    return false;
+  }
+
+  data = ReadImageUsingITK<TImage>(filename);
+
+  if(!data)
+    return false;
+
+  return true;
+}
+
+template<class TImage>
+itk::SmartPointer<TImage> ReadImageUsingITK(const std::string filename)
+{
+  typedef itk::ImageFileReader<TImage, itk::DefaultConvertPixelTraits<typename TImage::InternalPixelType> > ImageReader; //InternalPixelType != PixelType for vector images
+  typename ImageReader::Pointer reader = ImageReader::New();
+  reader->SetFileName(filename.c_str());
+  try
+  {
+    reader->Update();
+  }
+  catch( itk::ExceptionObject & err )
+  {
+    std::cerr << "Reader Encountered the following error." << std::endl;
+    std::cerr << err << std::endl;
+    return NULL;
+  }
+
+  return reader->GetOutput();
+}
+
+template<class TImage>
+bool SaveImage(const std::string filename, typename itk::SmartPointer<TImage> data, itk::ImageIOBase *io)
+{
+  typedef itk::ImageFileWriter<TImage> ImageWriter;
+
+  typename ImageWriter::Pointer writer = ImageWriter::New();
+    writer->UseInputMetaDataDictionaryOn();
+    writer->SetInput(data);
+    writer->SetFileName(filename.c_str());
+    if(io)
+      writer->SetImageIO(io);
+    try
+    {
+      writer->Update();
+    }
+    catch( itk::ExceptionObject & err )
+    {
+      std::cerr << "File Exception caught while writing!" << std::endl;
+      std::cerr << err << std::endl;
+      return false;
+    }
+
+  return true;
 }
