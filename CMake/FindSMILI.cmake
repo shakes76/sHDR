@@ -10,20 +10,26 @@
 #~ pkg_check_modules(PC_LIBXML QUIET libmilx-SMILI)
 #~ set(SMILI_DEFINITIONS ${PC_LIBXML_CFLAGS_OTHER})
 
+IF (WIN32)
+  set(SMILI_DIR "C:/Program Files/SMILX")
+ELSE (WIN32)
+  set(SMILI_DIR "/usr/local/sMILX.1.0.2")
+ENDIF (WIN32)
+
 find_path(SMILI_INCLUDE_DIR NAMES milxImage.h milxFile.h
-          HINTS "~/Dev/Install/include" "/usr/local/sMILX.1.0.2/include" "/usr/local/sMILX.1.0.1/include" "/usr/local/sMILX.1.0.0/include" "/usr/local/sMILX.0.99.9/include" "C:/Program Files (x86)/SMILX/include" "C:/Program Files/SMILX/include"
+          HINTS "${SMILI_DIR}/include" "~/Dev/Install/include" "/usr/local/sMILX.1.0.2/include" "/usr/local/sMILX.1.0.1/include" "/usr/local/sMILX.1.0.0/include" "/usr/local/sMILX.0.99.9/include" "C:/Program Files (x86)/SMILX/include" "C:/Program Files/SMILX/include"
           PATH_SUFFIXES smili )
           
 find_path(MILXQT_INCLUDE_DIRS NAMES milxQtImage.h milxQtMain.h
-          HINTS "~/Dev/Install/include" "/usr/local/sMILX.1.0.2/include" "/usr/local/sMILX.1.0.1/include" "/usr/local/sMILX.1.0.0/include" "/usr/local/sMILX.0.99.9/include" "C:/Program Files (x86)/SMILX/include" "C:/Program Files/SMILX/include"
+          HINTS "${SMILI_DIR}/include" "~/Dev/Install/include" "/usr/local/sMILX.1.0.2/include" "/usr/local/sMILX.1.0.1/include" "/usr/local/sMILX.1.0.0/include" "/usr/local/sMILX.0.99.9/include" "C:/Program Files (x86)/SMILX/include" "C:/Program Files/SMILX/include"
           PATH_SUFFIXES smili Qt )
 
 find_library(SMILI_LIBRARY NAMES milx-SMILI
-             HINTS "~/Dev/Install/lib" "/usr/local/sMILX.1.0.2/lib" "/usr/local/sMILX.1.0.1/lib" "/usr/local/sMILX.1.0.0/lib" "/usr/local/sMILX.0.99.9/lib" "C:/Program Files (x86)/SMILX/lib" "C:/Program Files/SMILX/lib")
+             HINTS "${SMILI_DIR}/lib" "~/Dev/Install/lib" "/usr/local/sMILX.1.0.2/lib" "/usr/local/sMILX.1.0.1/lib" "/usr/local/sMILX.1.0.0/lib" "/usr/local/sMILX.0.99.9/lib" "C:/Program Files (x86)/SMILX/lib" "C:/Program Files/SMILX/lib")
 find_library(MILXQT_LIBRARY NAMES milx-Qt
-             HINTS "~/Dev/Install/lib" "/usr/local/sMILX.1.0.2/lib" "/usr/local/sMILX.1.0.1/lib" "/usr/local/sMILX.1.0.0/lib" "/usr/local/sMILX.0.99.9/lib" "C:/Program Files (x86)/SMILX/lib" "C:/Program Files/SMILX/lib")
+             HINTS "${SMILI_DIR}/lib" "~/Dev/Install/lib" "/usr/local/sMILX.1.0.2/lib" "/usr/local/sMILX.1.0.1/lib" "/usr/local/sMILX.1.0.0/lib" "/usr/local/sMILX.0.99.9/lib" "C:/Program Files (x86)/SMILX/lib" "C:/Program Files/SMILX/lib")
 find_library(VTK_EXT_LIBRARY NAMES vtk-ext
-             HINTS "~/Dev/Install/lib" "/usr/local/sMILX.1.0.2/lib" "/usr/local/sMILX.1.0.1/lib" "/usr/local/sMILX.1.0.0/lib" "/usr/local/sMILX.0.99.9/lib" "C:/Program Files (x86)/SMILX/lib" "C:/Program Files/SMILX/lib")
+             HINTS "${SMILI_DIR}/lib" "~/Dev/Install/lib" "/usr/local/sMILX.1.0.2/lib" "/usr/local/sMILX.1.0.1/lib" "/usr/local/sMILX.1.0.0/lib" "/usr/local/sMILX.0.99.9/lib" "C:/Program Files (x86)/SMILX/lib" "C:/Program Files/SMILX/lib")
 
 set(SMILI_LIBRARIES ${SMILI_LIBRARY} ${MILXQT_LIBRARY} ${VTK_EXT_LIBRARY})
 MESSAGE("SMILI LIBRARIES: ${SMILI_LIBRARIES}")

@@ -9,7 +9,7 @@
  if [ "${dirname%$tmp}" != "/" ]; then
  dirname=$PWD/$dirname/../local/sHDR.@HDR_VERSION_STRING@
  fi
- @HDR_LD_LIBRARY_PATH@="${dirname}/lib:${@SMILX_LD_LIBRARY_PATH@}"
+ @HDR_LD_LIBRARY_PATH@="${dirname}/lib:${@HDR_LD_LIBRARY_PATH@}"
  export @HDR_LD_LIBRARY_PATH@
  $dirname/bin/$appname $*
  
