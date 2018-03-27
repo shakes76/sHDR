@@ -13,11 +13,12 @@ Chandra SS, Engstrom C, Fripp J, Walker D, Rose S, Ho C, Crozier S. Magnetic Res
 ## Prerequisites 
 Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
 
-For the main lbranch, you will require builds of VTK 6, ITK 4, Qt 4 and SMILI (smili-project.sourceforge.io/).
+For the GUI application and main branch, you will require builds of VTK, ITK 4, Qt 4 and [SMILI](https://smili-project.sourceforge.io/).
 
-I have tested this software on VTK 6.3.0, ITK 4.10, Qt 4.8.7 and SMILI v1.02
+I have tested this software on VTK 6.3.0, ITK 4.10, Qt 4.8.7 and SMILI v1.02 on Windows.
 
-On Ubuntu linux systems (12.04+), simply install the repository version of Qt, VTK (with VTK-Qt) and ITK. We reccomend ITK 4.6.1+ and VTK 6.3 or VTK 5.8.
+On Ubuntu linux systems (12.04+), simply install the repository version of Qt 4, VTK (the version with Qt 4 and VTK-Qt) and ITK. 
+We reccomend ITK 4.6.1+ and VTK 5.8+.  Note that VTK 5.10.1 has a few visualisation bugs, so it is not optimal. But in Ubuntu 16.04, VTK 5.10.1 is available in the repository and is built with Qt 4, while VTK 6 is built with Qt 5. Currently SMILI does not support Qt 5, but that will be supported in the future.
 For ITK 3 builds, I suggest a local build of ITK 3 with review enabled to get all the features currently available.
 
 ## Build Steps

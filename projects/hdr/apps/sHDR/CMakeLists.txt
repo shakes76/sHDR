@@ -194,51 +194,74 @@ ELSE(WIN32) #Rest of the OSes (Unix and Apple atm)
 
     #Install all necessary libraries
     install(FILES ${MILXQT_LIBS} DESTINATION lib
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+
+    #Install Python QT libraries if built
+    IF(BUILD_PYTHON_PLUGIN)
+      file(GLOB PYTHONQT_LIBS "${PYTHONQT_DIR}/lib/*PythonQt*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      install(FILES ${PYTHONQT_LIBS} DESTINATION lib
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    ENDIF(BUILD_PYTHON_PLUGIN)
+    
+    #Install MSK libraries if built
+    IF(BUILD_SSM_PLUGIN)
+      FILE(GLOB MSKFiles "${MILXQT_INSTALL_BINARY_DIR}/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      install(FILES ${MSKFiles} DESTINATION lib
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    ENDIF(BUILD_SSM_PLUGIN)
+    
+    #Install MSK libraries if built
+    IF(BUILD_FTL_PLUGIN)
+      FILE(GLOB FTLFiles1 "${NTTW_DIR}/lib/*frtw*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      FILE(GLOB FTLFiles2 "${NTTW_DIR}/lib/*nttw*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+      install(FILES ${FTLFiles1} DESTINATION lib
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+      install(FILES ${FTLFiles2} DESTINATION lib
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    ENDIF(BUILD_FTL_PLUGIN)
     
     #Install ITK libraries
-    IF(ITK_VERSION_MAJOR GREATER 3)
-      FILE(GLOB itkFiles "${ITK_DIR}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    ELSE(ITK_VERSION_MAJOR GREATER 3)
-      FILE(GLOB itkFiles "${ITK_DIR}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
-    ENDIF(ITK_VERSION_MAJOR GREATER 3)
-    INSTALL(FILES ${itkFiles} DESTINATION lib COMPONENT Runtime
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
-    
-    #Debian
-    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Shekhar Chandra <Shekhar.Chandra@csiro.au>")
-  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network") #10.04
-  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libinsighttoolkit3.20, libpythonqt2.0") #12.04
-    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libpythonqt2.0") #12.04, no ITK
-  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.6, libvtk5.6-qt4") #11.10
-
-    #RPM
-    SET(CPACK_RPM_PACKAGE_LICENSE "CSIRO Binary Distribution License")
-    SET(CPACK_RPM_PACKAGE_REQUIRES "libqt4, vtk, vtk-qt") #opensuse 12.3
+    #USING PACKAGE MANAGER VERSION - Ubuntu 16.04
+#~     IF(ITK_VERSION_MAJOR GREATER 3)
+#~       FILE(GLOB itkFiles "${ITK_DIR}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+#~     ELSE(ITK_VERSION_MAJOR GREATER 3)
+#~       FILE(GLOB itkFiles "${ITK_DIR}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+#~     ENDIF(ITK_VERSION_MAJOR GREATER 3)
+#~     INSTALL(FILES ${itkFiles} DESTINATION lib COMPONENT Runtime
+#~     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
     
     # Install VTK files 
-    #USING PACKAGE MANAGER VERSION
+    IF(VTK_MAJOR_VERSION GREATER 5)
+      FILE(GLOB vtkFiles "${VTK_DIR}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    ELSE(VTK_MAJOR_VERSION GREATER 5)
+      FILE(GLOB vtkFiles "${VTK_DIR}/bin/*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+    ENDIF(VTK_MAJOR_VERSION GREATER 5)
+    INSTALL(FILES ${vtkFiles} DESTINATION lib COMPONENT Runtime
+    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    
+    #Debian
+    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Shekhar Chandra <shakes76@users.sf.net>")
+  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libfftw3-3") #10.04
+  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libinsighttoolkit3.20, libpythonqt2.0, libfftw3-3") #12.04
+#~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libpythonqt2.0, libfftw3-3") #12.04, no ITK
+#~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.8, libvtk5.8-qt4, libpythonqt-dev, libinsighttoolkit4.5, libfftw3-3")
+    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libinsighttoolkit4.9, libfftw3-3") #Ubuntu 16.04
+  #~     SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqtcore4, libqtgui4, libqt4-xmlpatterns, libqt4-sql, libqt4-opengl, libqt4-network, libvtk5.6, libvtk5.6-qt4, libfftw3-3") #11.10
+
+    #RPM
+    SET(CPACK_RPM_PACKAGE_SUMMARY ${CPACK_PACKAGE_DESCRIPTION_SUMMARY})
+    SET(CPACK_RPM_PACKAGE_NAME ${CPACK_PACKAGE_NAME})
+    SET(CPACK_RPM_PACKAGE_VERSION ${CPACK_PACKAGE_VERSION})
+    SET(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
+    SET(CPACK_RPM_PACKAGE_LICENSE "Apache 2 License")
+    #SET(CPACK_RPM_PACKAGE_REQUIRES "libqt4, vtk, vtk-qt, libfftw3-3") #opensuse 12.3 and 13.1
+    SET(CPACK_RPM_PACKAGE_REQUIRES "qt, vtk, vtk-qt, InsightToolkit, pythonqt, fftw3") #Fedora 21
     
     #Install startup scripts
     install(FILES "${PROJECT_BINARY_DIR}/sHDR" DESTINATION "../../bin" 
-    PERMISSIONS WORLD_READ WORLD_EXECUTE)
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     install(FILES "${PROJECT_BINARY_DIR}/sHDR.sh" DESTINATION . 
-    PERMISSIONS WORLD_READ WORLD_EXECUTE)
-    
-    #desktop file for menus
-    SET(SMILX_DESKTOP_DIR "/usr/share/applications/")
-    SET(SMILX_PIXMAPS_DIR "/usr/share/icons/")
-  #~     FIND_PACKAGE(KDE4)
-  #~     include(KDE4Internal)
-  #~     install(FILES ${PROJECT_BINARY_DIR}/sHDR.desktop DESTINATION ${XDG_APPS_INSTALL_DIR}) 
-    install(FILES ${PROJECT_BINARY_DIR}/sHDR.desktop DESTINATION ${SMILX_DESKTOP_DIR}) 
-  #~     install(FILES ${SMILI_SOURCE_DIR}/resources/smilx_icon.png DESTINATION ${ICON_INSTALL_DIR}) 
-    install(FILES ${SMILI_SOURCE_DIR}/resources/smilx_icon.png DESTINATION ${SMILX_PIXMAPS_DIR}) 
-  #~     kde4_add_app_icon(smilx.cpp "${SMILI_SOURCE_DIR}/resources/smilx_icon.png")
-    find_program(XDG-DESKTOP-MENU_EXECUTABLE xdg-desktop-menu)
-    INSTALL(CODE "
-    execute_process(COMMAND ${XDG-DESKTOP-MENU_EXECUTABLE} install --novendor ${PROJECT_BINARY_DIR}/sHDR.desktop)
-    ")
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
     SET(CPACK_GENERATOR TGZ; DEB; RPM)
   ENDIF(APPLE)
