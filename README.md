@@ -10,6 +10,9 @@ Local Contrast Enhanced MR Images via High Dynamic Range Processing
 Chandra SS, Engstrom C, Fripp J, Walker D, Rose S, Ho C, Crozier S. Magnetic Resonance in Medicine. 2018.
 ```
 
+## ITK Only Build Available
+Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
+
 ## Prerequisites 
 Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
 
@@ -22,6 +25,11 @@ We reccomend ITK 4.6.1+ and VTK 5.8+.  Note that VTK 5.10.1 has a few visualisat
 For ITK 3 builds, I suggest a local build of ITK 3 with review enabled to get all the features currently available.
 
 ## Build Steps
+
+### ITK Only Build
+Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
+
+### GUI Build
 Once all of the above dependencies are built or installed, see SMILI YouTube channel for help (https://www.youtube.com/channel/UCD-hU6IF2qGlz7roexAUj1Q)
 Then you can build this package.
 
