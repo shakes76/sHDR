@@ -33,8 +33,7 @@ For ITK 3 builds, I suggest a local build of ITK 3 with review enabled to get al
 Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
 
 ### GUI Build
-Once all of the above dependencies are built or installed, see SMILI YouTube channel for help (https://www.youtube.com/channel/UCD-hU6IF2qGlz7roexAUj1Q)
-Then you can build this package.
+Once all of the above dependencies are built or installed, see SMILI YouTube channel for help (https://www.youtube.com/channel/UCD-hU6IF2qGlz7roexAUj1Q). Then you can build this package. A quick way to set things up is to build ITK/VTK that matches the SMILI installer versions using the VS2013 compiler typically used for SMILI Windows builds. This library should pickup the installed SMILI and an installer of Qt 4 is provided in the [dependencies download page](https://sourceforge.net/projects/smili-project/files/Dependencies/).
 
 Ensure to set the 
 ```
@@ -45,7 +44,7 @@ SMILI_LIBRARY
 SMILI_INCLUDE_DIR
 ```
 
-The VTK, ITK and Qt must match that of the SMILI build. On my system these values were:
+The VTK, ITK and Qt must match that of the SMILI build. If they do not match, on Windows you will get dllspec errors at link time. On my system these values were:
 ```
 D:/Dev/smili-release/include/Qt
 D:/Dev/smili-release/build-vs2013/lib/Release/milx-Qt.lib
