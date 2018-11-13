@@ -1,14 +1,17 @@
 ﻿# HDR-MRI
-
-This library contains source code and scripts for the HDR-MRI project published in MRM. 
 ![sHDR Screenshot](resources/screenies/main_wide.png)
 
-Please cite this work as:
-
+An implementation of the high dynamic range (HDR) algorithm for MRI published in Magnetic Resonance in Medicine (MRM) as
 ```
 Local Contrast Enhanced MR Images via High Dynamic Range Processing
-Chandra SS, Engstrom C, Fripp J, Walker D, Rose S, Ho C, Crozier S. Magnetic Resonance in Medicine. 2018.
+Chandra SS, Engstrom C, Fripp J, Walker D, Rose S, Ho C, Crozier S. 
+Magnetic Resonance in Medicine, vol. 80, no. 3, pp. 1206–1218, 2018.
 ```
+Magnetic resonance images (MRIs) typically allow for exquisite soft tissue contrast when compared to other medical imaging modalities. However, the large number of MR imaging parameters, which gives rise to the multitude of different MR sequences, allow for a varying degrees of contrast. An MR examination therefore usually consists of a number of scans, each having to be analysed. The HDR MRI algorithm allows for fusing the scans together to form a single omnibus image with enhanced definition of thin, complex anatomical structures, especially in the presence of variable or hyperintense signals.
+
+The algorithm takes as input coregistered MR images (preferrably of different contrasts), non-linearly combines them and outputs a single HDR MR image. This library provides a single ITK class, a commandline executable and a GUI application built on the open source [SMILI Biomedical Imaging Framework](https://smili-project.sourceforge.io/).
+
+Installers and binaries can be found for various operating systems on the [release page](https://github.com/shakes76/sHDR/releases).
 
 ## ITK Only Build Available
 Commandline applications can be built on the topic-itk-only branch and a build of ITK 4.
